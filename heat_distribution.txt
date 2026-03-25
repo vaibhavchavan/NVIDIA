@@ -1,0 +1,47 @@
+from numba import cuda
+import numpy as np
+import matplotlib.pyplot as plt
+
+# Grid size
+N = 50
+
+# Initialize plate
+plate = np.zeros((N, N), dtype=np.float32)
+
+# Heat source (center)
+plate[N//2, N//2] = 100
+
+# Copy to GPU
+d_plate = cuda.to_device(plate)
+d_new_plate = cuda.device_array_like(plate)
+
+# CUDA Kernel
+@cuda.jit
+def heat_transfer(old, new):
+    i, j = cuda.grid(2)
+    
+    if 1 <= i < old.shape[0]-1 and 1 <= j < old.shape[1]-1:
+        new[i, j] = 0.25 * (
+            old[i+1, j] +
+            old[i-1, j] +
+            old[i, j+1] +
+            old[i, j-1]
+        )
+
+# Threads and blocks
+threads = (16, 16)
+blocks = (N//16 + 1, N//16 + 1)
+
+# Run simulation
+for _ in range(100):
+    heat_transfer[blocks, threads](d_plate, d_new_plate)
+    d_plate, d_new_plate = d_new_plate, d_plate
+
+# Copy result back
+result = d_plate.copy_to_host()
+
+# Plot
+plt.imshow(result, cmap='hot')
+plt.colorbar()
+plt.title("Heat Distribution (GPU)")
+plt.show()
