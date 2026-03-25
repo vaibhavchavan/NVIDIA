@@ -1,0 +1,45 @@
+import torch
+import torch.nn as nn
+
+# Device
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Dummy sequence data: (batch_size, seq_length, input_size)
+X = torch.randn(100, 5, 10).to(device)  # 100 samples, sequence length=5, features=10
+y = torch.randint(0, 2, (100, 1)).float().to(device)
+
+# RNN Model
+class SimpleRNN(nn.Module):
+    def __init__(self):
+        super(SimpleRNN, self).__init__()
+        self.rnn = nn.RNN(input_size=10, hidden_size=16, batch_first=True)
+        self.fc = nn.Linear(16, 1)
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, x):
+        out, _ = self.rnn(x)        # RNN output
+        out = out[:, -1, :]         # Last time step
+        out = self.fc(out)
+        out = self.sigmoid(out)
+        return out
+
+# Model to GPU
+model = SimpleRNN().to(device)
+
+# Loss & optimizer
+criterion = nn.BCELoss()
+optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
+# Training loop
+epochs = 5
+for epoch in range(epochs):
+    model.train()
+
+    output = model(X)
+    loss = criterion(output, y)
+
+    optimizer.zero_grad()
+    loss.backward()
+    optimizer.step()
+
+    print(f"Epoch {epoch+1}, Loss: {loss.item():.4f}")

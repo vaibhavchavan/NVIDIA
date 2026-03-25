@@ -1,0 +1,23 @@
+import torch
+import torch.nn as nn
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+# Simple linear model
+model = nn.Linear(2, 1).to(device)
+
+# Dummy data
+X = torch.tensor([[1.0, 2.0], [3.0, 4.0]]).to(device)
+y = torch.tensor([[1.0], [0.0]]).to(device)
+
+# Loss
+criterion = nn.MSELoss()
+
+# Forward
+output = model(X)
+loss = criterion(output, y)
+
+# Backward
+loss.backward()
+
+print("Loss:", loss.item())

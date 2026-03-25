@@ -1,0 +1,10 @@
+import torch
+
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+A = torch.randn(2, 3).to(device)
+B = torch.randn(3, 2).to(device)
+
+C = torch.matmul(A, B)
+
+print("Matrix Result:\n", C)
